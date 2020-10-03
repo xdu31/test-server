@@ -1,0 +1,20 @@
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: testserver-ingress
+  namespace: testserver
+  annotations:
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization
+    nginx.ingress.kubernetes.io/auth-url: http://identity-api.identity.svc.cluster.local/v2/session/verify
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+spec:
+  rules:
+  - host: env-5.test.infoblox.com
+    http:
+      paths:
+      - backend:
+          serviceName: test-server
+          servicePort: 8080
+        path: /test-server/v1

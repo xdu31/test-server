@@ -1,0 +1,53 @@
+apiVersion: extensions/v1beta1
+kind: Deployment
+metadata:
+  name: api
+  namespace: testserver
+  labels:
+    app: test-server-app
+spec:
+  selector:
+    matchLabels:
+      app: test-server-app
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: test-server-app
+    spec:
+      containers:
+      - name: api-server
+        envFrom:
+        - configMapRef:
+            name: testserver-configmap
+        image: xdu31/test-server:latest
+        imagePullPolicy: Always
+        args:
+        - "--database.address"
+        - "$(DB_HOST)"
+        - "--database.port"
+        - "$(DB_PORT)"
+        - "--database.user"
+        - "$(DB_USER)"
+        - "--database.password"
+        - "$(DB_PASSWORD)"
+        - "--database.ssl"
+        - "$(DB_SSLMODE)"
+        - "--database.name"
+        - "$(DB_NAME)"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-server
+  namespace: testserver
+  labels:
+    app: test-server-app
+spec:
+  selector:
+    app: test-server-app
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: 8080

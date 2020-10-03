@@ -1,0 +1,143 @@
+syntax = "proto3";
+
+package service;
+
+import "google/protobuf/empty.proto";
+import "google/api/annotations.proto";
+import "github.com/lyft/protoc-gen-validate/validate/validate.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "github.com/infobloxopen/protoc-gen-gorm/options/gorm.proto";
+import "github.com/infobloxopen/protoc-gen-gorm/types/types.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/rpc/resource/resource.proto";
+
+// The TestServer service, GetVersion RPC, and Version message
+// make up a simple "starter" example. It allows the Atlas CLI to generate an
+// end-to-end example for the sake of demonstration. Feel free to change
+// GetVersion to better-suit how your versioning system, or get rid of it entirely.
+
+// Here are some helpful resources to aid you in your protobuf quest:
+// https://github.com/xdu31/pkg/pb/service.proto
+// https://developers.google.com/protocol-buffers/docs/proto
+// https://github.com/grpc-ecosystem/grpc-gateway
+// https://developers.google.com/protocol-buffers/docs/style
+
+// Happy protobuffing!
+
+// TODO: Write a protobuf schema for the TestServer service. The 
+// messages and RPCs will compose the API for the service.
+
+// TODO: Structure your own protobuf messages. Each protocol buffer message is a 
+// small logical record of information, containing a series of name-value pairs.
+message VersionResponse {
+  string version = 1;
+}
+
+// TODO: Define the TestServer service and its methods. Feel free
+// to change the name of TestServer to better-suit your naming
+// conventions.
+service TestServer {
+  rpc GetVersion (google.protobuf.Empty) returns (VersionResponse) {
+    // TODO: Provide mappings between REST endpoints and service methods.
+    option (google.api.http) = {
+      get: "/version"
+    };
+  }
+
+}
+
+// TypeWithID demonstrates some basic assocation behavior
+message Ip {
+  // Again we use the 'ormable' option, but also include an extra field
+  // using the 'include' option. Any number of fields can be defined this way
+  // to be visible on the ORM side, but hidden from the API. This is generally
+  // useful to aggregate values from the database into API fields
+  option (gorm.opts) = {
+    ormable: true,
+    multi_account: true
+  };
+  // any field named 'id' is assumed by gorm to be the primary key for the
+  // object.
+  atlas.rpc.Identifier id = 1 [(gorm.field).tag = {type: "serial"  primary_key: true}];
+  gorm.types.InetValue ip_address = 2;
+}
+
+message CreateIpRequest {
+  Ip payload = 1;
+}
+
+message CreateIpResponse {
+  Ip result = 1;
+}
+
+message ReadIpRequest {
+  atlas.rpc.Identifier id = 1;
+}
+
+message ReadIpResponse {
+  Ip result = 1;
+}
+
+message UpdateIpRequest {
+  Ip payload = 1;
+}
+
+message UpdateIpResponse {
+  Ip result = 1;
+}
+
+message DeleteIpRequest {
+  atlas.rpc.Identifier id = 1;
+}
+
+message DeleteIpResponse {}
+
+message ListIpsRequest {
+  infoblox.api.Filtering filter = 1;
+  infoblox.api.Sorting order_by = 2;
+  infoblox.api.FieldSelection fields = 3;
+  infoblox.api.Pagination paging = 4;
+}
+
+message ListIpsResponse {
+  repeated Ip results = 1;
+}
+
+service Ips {
+  option (gorm.server).autogen = true;
+  rpc Create (CreateIpRequest) returns (CreateIpResponse) {
+      option (google.api.http) = {
+          post: "/ips"
+          body: "payload"
+      };
+  }
+
+  rpc Read (ReadIpRequest) returns (ReadIpResponse) {
+      option (google.api.http) = {
+          get: "/ips/{id.resource_id}"
+      };
+  }
+
+  rpc Update (UpdateIpRequest) returns (UpdateIpResponse) {
+      option (google.api.http) = {
+          put: "/ips/{payload.id.resource_id}"
+          body: "payload"
+      };
+  }
+
+  rpc Delete (DeleteIpRequest) returns (DeleteIpResponse) {
+      option (google.api.http) = {
+          delete: "/ips/{id.resource_id}"
+      };
+      option (gorm.method).object_type = "Ip";
+  }
+
+  rpc List (ListIpsRequest) returns (ListIpsResponse) {
+      option (google.api.http) = {
+          get: "/ips"
+      };
+  }
+
+}
+
+
