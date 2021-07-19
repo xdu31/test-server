@@ -1,0 +1,7 @@
+FROM postgres:13-alpine
+
+COPY ./db/migrations/*.up.sql /tmp/
+
+RUN ls /tmp/*.up.sql | sort -t_ -k1,1 | xargs cat >> /docker-entrypoint-initdb.d/initial.sql && rm /tmp/*.up.sql
+
+EXPOSE 5432

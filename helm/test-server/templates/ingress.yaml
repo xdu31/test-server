@@ -1,0 +1,31 @@
+{{ $namespace := .Release.Namespace }}
+{{ $appName := include "testserver.name" . }}
+{{ $cspHost := tpl (.Values.host.csp.domain) .}}
+{{ $servicePort := .Values.service.http.port }}
+{{ $authURL := tpl (.Values.authURL) .}}
+---
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: gateway
+  namespace: {{ $namespace }}
+  annotations:
+    nginx.ingress.kubernetes.io/auth-response-headers: Authorization
+    nginx.ingress.kubernetes.io/auth-url: {{ $authURL }}
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/proxy-body-size: 10m
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "180"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "180"
+spec:
+  rules:
+  - host: {{ $cspHost }}
+    http:
+      paths:
+      - backend:
+          serviceName: {{ $appName }}
+          servicePort: {{ $servicePort }}
+        path: {{ .Values.service.ingress }}
+  tls:
+  - hosts:
+    - {{ $cspHost }}
+    secretName: {{ .Values.cspSecretName }}

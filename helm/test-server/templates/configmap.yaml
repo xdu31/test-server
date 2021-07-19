@@ -1,0 +1,21 @@
+{{- $appName := include "testserver.name" . }}
+{{- $namespace := .Release.Namespace }}
+{{- $dbHost := tpl (.Values.db.test.server) . }}
+{{- $dbPort := .Values.db.port }}
+{{- $dbName := .Values.db.name }}
+{{- $dbUser := .Values.db.user }}
+{{- $dbPass := .Values.db.password }}
+{{- $dbSslMode := .Values.db.sslMode }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $appName }}-configmap
+  namespace: {{ $namespace }}
+data:
+  POSTGRES_HOST: {{ $dbHost }}
+  POSTGRES_PORT: {{ $dbPort | quote }}
+  POSTGRES_DB: {{ $dbName }}
+  POSTGRES_USER: {{ $dbUser }}
+  POSTGRES_PASSWORD: {{ $dbPass }}
+  POSTGRES_SSLMODE: {{ $dbSslMode }}

@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package service;
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+import "github.com/envoyproxy/protoc-gen-validate/validate/validate.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+import "github.com/infobloxopen/atlas-app-toolkit/query/collection_operators.proto";
+import "github.com/infobloxopen/protoc-gen-preprocess/options/preprocess.proto";
+import "google/protobuf/field_mask.proto";
+
+option go_package = "github.com/xdu31/test-server/pkg/server/pb/;pb";
+
+// TypeWithID demonstrates some basic assocation behavior
+message Ip {
+  option (preprocess.each).string = {
+    methods: [trim]
+  };
+
+  int32 id = 1 [(validate.rules).int32.gte = 0];
+
+  string ip_address = 2;
+
+  // The time when this Ip object was created.
+  google.protobuf.Timestamp created_time = 3 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field).read_only = true];
+
+  // The time when this Ip object was last updated.
+  google.protobuf.Timestamp updated_time = 4 [(grpc.gateway.protoc_gen_swagger.options.openapiv2_field).read_only = true];
+}
+
+message CreateIpRequest {
+  Ip payload = 1;
+}
+
+message CreateIpResponse {
+  Ip result = 1;
+}
+
+message ReadIpRequest {
+  int32 id = 1 [(validate.rules).int32.gte = 0];
+}
+
+message ReadIpResponse {
+  Ip result = 1;
+}
+
+message UpdateIpRequest {
+  Ip payload = 1;
+
+  // Field Mask.
+  google.protobuf.FieldMask fields = 2;
+}
+
+message UpdateIpResponse {
+  Ip result = 1;
+}
+
+message DeleteIpRequest {
+  repeated int32 ids = 1 [(validate.rules).repeated = {items: {int32: {gte: 0}}, unique: true}];
+}
+
+message DeleteIpResponse {}
+
+message ListIpsRequest {
+  // Filtering.
+  reserved 1;
+  infoblox.api.Filtering filter = 2;
+  infoblox.api.FieldSelection fields = 3;
+}
+
+message ListIpsResponse {
+  repeated Ip results = 1;
+}
+
+service IpService {
+  rpc Create (CreateIpRequest) returns (CreateIpResponse) {
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        tags: "ips";
+      };
+
+      option (google.api.http) = {
+          post: "/ips"
+          body: "payload"
+      };
+  }
+
+  rpc Read (ReadIpRequest) returns (ReadIpResponse) {
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        tags: "ips";
+      };
+
+      option (google.api.http) = {
+          get: "/ips/{id}"
+      };
+  }
+
+  rpc Update (UpdateIpRequest) returns (UpdateIpResponse) {
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        tags: "ips";
+      };
+
+      option (google.api.http) = {
+          put: "/ips/{payload.id}"
+          body: "payload"
+      };
+  }
+
+  rpc Delete (DeleteIpRequest) returns (DeleteIpResponse) {
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        tags: "ips";
+      };
+
+      option (google.api.http) = {
+          delete: "/ips"
+          body: "*"
+      };
+  }
+
+  rpc List (ListIpsRequest) returns (ListIpsResponse) {
+      option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+        tags: "ips";
+      };
+
+      option (google.api.http) = {
+          get: "/ips"
+      };
+  }
+}
+
+

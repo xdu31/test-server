@@ -1,0 +1,48 @@
+# Default values for test-server.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+internalPort: 8081
+httpProtocol: TCP
+grpcProtocol: TCP
+replicaCount: 1
+
+env: env-5
+
+db:
+  user: test_user
+  port: "5432"
+  sslMode: disable
+  name: test
+  #TODO: should be in Vault
+  password: test_pass
+  test:
+    server: "test-{{ .Values.env }}.{{ .Values.db.serverDomain }}"
+  serverDomain: "xxxxxxxxxx.us-east-1.rds.amazonaws.com"
+
+image:
+  pullPolicy: Always
+
+  repository: xdu31
+
+  nameAPIService: test-server
+  nameMigration: test-server-db-migrate
+  tagService: ""
+
+host:
+  csp:
+    domain: env-5.test.domain.com
+
+authURL: http://identity-api.identity.svc.cluster.local/v2/session/verify
+
+service:
+  serviceName: test-server
+  ingress: /api/test-server/v1/
+  http:
+    name: http
+    port: 8081
+
+grpcEndpoint:
+  auditlog: audit-logging.auditlog.svc:9090
+
+cspSecretName: csp-cert

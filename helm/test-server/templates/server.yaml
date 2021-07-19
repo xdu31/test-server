@@ -1,0 +1,81 @@
+{{ $namespace := .Release.Namespace }}
+{{ $appName := include "testserver.name" . }}
+{{ $imageService := .Values.image.nameAPIService }}
+{{ $imageTagService := .Values.image.tagService | default .Chart.Version }}
+{{ $migrationImage := .Values.image.nameMigration }}
+{{ $migrationTag := .Values.image.tagService | default .Chart.Version }}
+{{ $imagePullPolicy := .Values.image.pullPolicy }}
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $namespace }}
+  labels:
+    app: {{ $appName }}-app
+spec:
+  selector:
+    matchLabels:
+      app: {{ $appName }}-app
+  template:
+    metadata:
+      labels:
+        app: {{ $appName }}-app
+        application: {{ $appName }}
+    spec:
+      initContainers:
+      - name: {{ $appName }}-db-migration
+        envFrom:
+        - configMapRef:
+            name: {{ $appName }}-configmap
+        env:
+        - name: LOGGING_LEVEL
+          value: "debug"
+        - name: dsn
+          value: postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)
+        image: {{ $migrationImage }}:{{ $migrationTag }}
+        imagePullPolicy: {{ $imagePullPolicy }}
+        args:
+        - "--database.dsn"
+        - "$(dsn)"
+        - up
+      containers:
+      - name: {{ $appName }}-server
+        envFrom:
+        - configMapRef:
+            name: {{ $appName }}-configmap
+        image: {{ $imageService }}:{{ $imageTagService }}
+        imagePullPolicy: {{ $imagePullPolicy }}
+        args:
+        - "--database.address"
+        - "$(POSTGRES_HOST)"
+        - "--database.port"
+        - "$(POSTGRES_PORT)"
+        - "--database.user"
+        - "$(POSTGRES_USER)"
+        - "--database.password"
+        - "$(POSTGRES_PASSWORD)"
+        - "--database.ssl"
+        - "$(POSTGRES_SSLMODE)"
+        - "--database.name"
+        - "$(POSTGRES_DB)"
+        - "--gateway.endpoint={{ .Values.service.ingress }}"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ $appName }}
+  namespace: {{ $namespace }}
+  labels:
+    app: {{ $appName }}-app
+spec:
+  selector:
+    app: {{ $appName }}-app
+  ports:
+  - name: http
+    port: 8081
+    protocol: TCP
+    targetPort: 8081
+  - name: grpc
+    port: 9090
+    targetPort: 9090

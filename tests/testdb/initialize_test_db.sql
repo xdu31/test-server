@@ -1,0 +1,2 @@
+-- This file will be used to initialize the test database.
+-- INSERT INTO accounts (id, created_at, updated_at) VALUES
