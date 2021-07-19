@@ -46,8 +46,6 @@ func initFlags() {
 	pflag.Duration("audit.client.timeout", 10*time.Second, "timeout for audit log client")
 	pflag.Int("audit.client.retry", 5, "retries to connect to audit log server")
 
-	pflag.String("proxy.grpc.port", "9092", "port of gRPC server of ATC Proxy Server")
-
 	pflag.Parse()
 	viper.BindPFlags(pflag.CommandLine)
 	viper.AutomaticEnv()
